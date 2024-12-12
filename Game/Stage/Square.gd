@@ -2,7 +2,7 @@ class_name SquareObj
 extends CharacterBody2D
 
 var data: Square.Instance = Square.Instance.new('B', 4, Square.SquareTexture.BLANK, Color.CYAN)
-var state: Enums.KeyState = Enums.KeyState.NONE
+var state: Square.PressState = Square.PressState.NONE
 
 var fall_animation = 'fall.linear'
 var fail_animation = 'hit.default'

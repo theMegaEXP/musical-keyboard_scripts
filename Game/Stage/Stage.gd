@@ -16,8 +16,9 @@ extends Node2D
 @export var note_fall_time_multiplier: int = 8 ## The number of times the note_time will cycle before the note reaches its ideal location to be pressed.
 
 @export_category("Sequence")
-@export var keyboard_style = Enums.KeyboardStyle.MAIN ## The portion of the keyboard that will be used when playing.
+@export var keyboard_style = Keys.Row.MAIN ## The portion of the keyboard that will be used when playing.
 @export var sequence_raw: JSON ## The sequence of notes to fall in relation to the tempo.
+@export var show_gridlines: bool = false
 
 @onready var sequence: Array[Sequence.Point] = Sequence.json_to_sequence(sequence_raw)
 var sequence_index: int = 0
@@ -27,6 +28,11 @@ var sequence_index: int = 0
 var keys_in_play := DoublyLinkedList.new()
 var keys_in_zone := DoublyLinkedList.new()
 var keys_pressed := Hashset.new()
+
+var good_hits: int = 0
+
+func _enter_tree():
+	show_gridlines = SettingsManager.gridlines_enabled()
 
 func _ready():
 	set_sequence_from_style()
@@ -42,8 +48,16 @@ func _ready():
 	$SpawnTimer.start()
 	$SongDelayTimer.start()
 
+func _process(delta):
+	# Set progress bar based on $MusicPlayer values
+	var pos = $MusicPlayer.get_playback_position()
+	var len = $MusicPlayer.stream.get_length()
+	%ProgressBar.value = (pos / len) * 100
+
 func _input(event):
-	if event is InputEventKey:
+	if event.is_action_pressed("pause"):
+		SceneManager.pause()
+	elif event is InputEventKey:
 		if event.pressed \
 		and event.keycode in Keys.KEY_TO_KEYBOARD_CHAR \
 		and not keys_pressed.contains(event.keycode):
@@ -56,13 +70,13 @@ func _input(event):
 func set_sequence_from_style():
 	var map
 	match keyboard_style:
-		Enums.KeyboardStyle.NUMROW:
+		Keys.Row.NUMROW:
 			map = Keys.KEY_TO_NUMROW
-		Enums.KeyboardStyle.TOPROW:
+		Keys.Row.TOPROW:
 			map = Keys.KEY_TO_TOPROW
-		Enums.KeyboardStyle.HOMEROW:
+		Keys.Row.HOMEROW:
 			map = Keys.KEY_TO_HOMEROW
-		Enums.KeyboardStyle.BOTTOMROW:
+		Keys.Row.BOTTOMROW:
 			map = Keys.KEY_TO_BOTTOMROW
 	
 	if map != null:
@@ -128,17 +142,39 @@ func key_press(key: String):
 			%Score.hit(pressed_square.state)
 			%NoteGoodArea.play_hit_animation()
 			summon_key_press_state(pressed_square, pressed_square.state)
+			good_hits += 1
 	# If pressed square is not in the zone
 	else:
 		pressed_square.animate_fail()
 		%HealthBar.decrease_health()
 		%Score.reset_good_hits()
 		
-func summon_key_press_state(active_square: CharacterBody2D, state: Enums.KeyState):
+func summon_key_press_state(active_square: CharacterBody2D, state: Square.PressState):
 	var kps = key_press_state.instantiate()
 	kps.position = Vector2(active_square.get_parent().position.x + $SpawnPosition.position.x, active_square.position.y + $SpawnPosition.position.y)
 	kps.key_state = state
-	add_child(kps)
+	call_deferred('add_child', kps)
+	
+func end_level(finished: bool):
+	var song_name: String = SceneManager.cur_level_data.name
+	var difficulty: LevelData.Difficulty = SceneManager.cur_level_data.difficulty
+	var cur_stats = SaveDataManager.get_level_stats(song_name, difficulty)
+	var rank = Sequence.calc_rank(good_hits, Sequence.count_squres(sequence))
+	
+	# Save data
+	var stats := {
+		'completed': finished,
+		'high_score': maxi(%Score.score, cur_stats.high_score),
+		'rank': rank if finished and Sequence.compare_ranks(rank, cur_stats.rank) else cur_stats.rank,
+		'percent': 100 if finished else maxi(int(%ProgressBar.value), cur_stats.percent)
+	}
+	SaveDataManager.update_level_stats(song_name, difficulty, stats)
+	
+	if finished:
+		SceneManager.to_level_complete() # Change scene to game end screen
+	else:
+		SceneManager.restart_level()
+	
 	
 func _on_spawn_timer_timeout():
 	if sequence_index >= sequence.size():
@@ -174,18 +210,26 @@ func _zone_exited(body):
 		summon_key_press_state(body, body.state)
 		keys_in_play.delete(body)
 		keys_in_zone.delete(body)
+		%HealthBar.decrease_health()
 
 func _on_key_held(body: SquareHoldObj, percent: float): 
 	print("Percent: " + str(percent))
-	if (percent < 0.5):
+	if (percent < 0.5): # Bad hit
 		%Score.reset_good_hits()
-		summon_key_press_state(body, Enums.KeyState.MISS)
+		if (percent < 0.2): 
+			%HealthBar.decrease_health()
+		summon_key_press_state(body, Square.PressState.MISS)
 		body.animate_fail()
-	else:
+	else: # Good hit
 		%Score.hit(body.state)
 		%Score.increase_score(int(percent * 10) * body.data.duration)
+		%HealthBar.increase_health()
 		summon_key_press_state(body, body.state)
 		body.animate_success()
+		good_hits += 1
 		
-func _on_music_player_finished():
-	pass#End game
+func _on_music_player_finished(): # End level and save data
+	end_level(true)
+
+func _on_health_depleted():
+	end_level(false)

@@ -24,7 +24,7 @@ func _ready():
 	$SongPlayer.volume_db = -db_reduction
 	
 func _on_edit_sequence_button_pressed():
-	$SequenceStringPopup.set_sequence(str(Sequence.sequence_to_json(%NoteGrid.get_sequence()).data))
+	$SequenceStringPopup.set_sequence(JSON.stringify(Sequence.sequence_to_json(%NoteGrid.get_sequence()).data, '\t'))
 	$SequenceStringPopup.show()
 	
 func _on_button_pressed():
@@ -55,7 +55,7 @@ func _on_sequence_string_popup_updated(sequence: String):
 
 func _on_file_dialog_file_selected(path: String):
 	var file = path.split('/')[-1]
-	var data = LevelData.get_level_by_file(file)
+	var data = LevelData.get_data_by_song_file(file)
 	
 	if data.has('error'):
 		push_error('File with path name ' + str(file) + ' could not be found.')

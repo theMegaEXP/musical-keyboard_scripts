@@ -54,3 +54,25 @@ static func json_to_sequence(json: JSON) -> Array[Point]:
 		sequence.append(sequence_point)
 		
 	return sequence
+
+
+static func count_squres(sequence: Array[Point]) -> int:
+	var count: int = 0
+	for point: Point in sequence:
+		count += point.squares.size()
+	return count
+	
+static func calc_rank(good_hits: int, total_squres: int) -> LevelData.Rank:
+	var percent: int = int((float(total_squres) / good_hits) * 100)
+	if percent >= 99: return LevelData.Rank.S_PLUS
+	elif percent >= 97: return LevelData.Rank.S
+	elif percent >= 95: return LevelData.Rank.A
+	elif percent >= 92: return LevelData.Rank.B
+	elif percent >= 85: return LevelData.Rank.C
+	else: return LevelData.Rank.D
+	
+static func compare_ranks(rank1: LevelData.Rank, rank2: LevelData.Rank) -> bool: # Checks whether the first rank is better than the second rank.
+	var rank1_str = LevelData.rank_enum_to_string(rank1)
+	var rank2_str = LevelData.rank_enum_to_string(rank2)
+	return LevelData.RANK_STRINGS.find(rank1_str) < LevelData.RANK_STRINGS.find(rank2_str) # rank1 should be less than rank2 for rank1 to be the higher rank
+	

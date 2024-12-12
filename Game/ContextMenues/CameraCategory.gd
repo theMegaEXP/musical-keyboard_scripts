@@ -52,7 +52,7 @@ func set_dropdowns():
 	
 func set_dropdown(dropdown: OptionButton, e: Dictionary):
 	for item in e.keys():
-		dropdown.add_item(Helpers.enum_string_to_capitalized(item))
+		dropdown.add_item(Helpers.snake_to_capitalized(item))
 
 func set_content(cameras: Array[Camera.Instance]):
 	for camera: Camera.Instance in cameras:

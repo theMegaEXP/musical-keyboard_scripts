@@ -1,21 +1,26 @@
 extends ProgressBar
 
+const DEFAULT_INCREASE = 1.0
+const DEFAULT_DECREASE = 8.0
+
 ## The health of the player
-@export var max_health: int = 100
+@export_range(0, 1000) var max_health: int = 100
 var health = max_health
 
-signal on_health_depleted
+signal health_depleted
 
-func increase_health(amount: float = 1):
+func _ready():
+	update_health() # Make health color reset when level changes
+
+func increase_health(amount: float = DEFAULT_INCREASE):
 	health += amount
 	update_health()
 	
-func decrease_health(amount: float = 8):
+func decrease_health(amount: float = DEFAULT_DECREASE):
 	health -= amount
 	update_health()
 	
 func update_health():
-	print(health)
 	if health <= 15:
 		change_color(Color.RED)
 	elif health <= 40:
@@ -30,11 +35,9 @@ func update_health():
 		value = health
 	else:
 		value = 0
-		on_health_depleted.emit()
+		health_depleted.emit()
 		
 func change_color(color: Color):
-	print(color)
 	var stylebox = get_theme_stylebox("fill")
 	stylebox.bg_color = color
-	print(stylebox.bg_color)
 		

@@ -17,18 +17,18 @@ func increase_score(amount: int = 5):
 	score += amount * multiplier
 	set_score_text()
 	
-func hit(key_state: Enums.KeyState = Enums.KeyState.POOR):
+func hit(key_state: Square.PressState = Square.PressState.POOR):
 	match key_state:
-		Enums.KeyState.POOR:	
+		Square.PressState.POOR:	
 			good_hits += 1
 			increase_score(1)
-		Enums.KeyState.GOOD:
+		Square.PressState.GOOD:
 			good_hits += 1
 			increase_score(2)
-		Enums.KeyState.GREAT:
+		Square.PressState.GREAT:
 			good_hits += 1
 			increase_score(3)
-		Enums.KeyState.EXCELLENT:
+		Square.PressState.EXCELLENT:
 			good_hits += 1
 			increase_score(5)
 		_:

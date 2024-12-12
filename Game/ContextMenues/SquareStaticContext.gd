@@ -28,7 +28,7 @@ func set_dropdowns():
 	var valueEnums = [Square.SquareTexture, Square.FallAnim, Square.HitAnim, Square.HitAnim]
 	for i in 4:
 		for values in valueEnums[i]:
-			dropdowns[i].add_item(Helpers.enum_string_to_capitalized(values))
+			dropdowns[i].add_item(Helpers.snake_to_capitalized(values))
 			
 func setup_checkboxes():
 	for container: HBoxContainer in $MainContainer.get_children():

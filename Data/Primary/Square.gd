@@ -45,6 +45,16 @@ enum Values {
 	BAD_HIT_ANIM
 }
 
+enum PressState {
+	EXCELLENT,
+	GREAT,
+	GOOD,
+	POOR,
+	MISS,
+	FAIL,
+	NONE,
+}
+
 class Instance:
 
 	var key: String
@@ -106,5 +116,5 @@ static func dict_to_instance(dict: Dictionary) -> Instance:
 	)
 	
 static func get_texture(texture: SquareTexture) -> Texture:
-	return load("res://Resources/Textures/Square/" + Helpers.enum_string_to_camel(SquareTexture.keys()[texture]) + ".tres") 
+	return load("res://Resources/Textures/Square/" + Helpers.snake_to_camel(SquareTexture.keys()[texture]) + ".tres") 
 		
